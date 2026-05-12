@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type AuthMode = "login" | "signup";
 
@@ -73,8 +73,33 @@ function AuthCard({
   const [codeSent, setCodeSent] = useState(false);
   const [devCode, setDevCode] = useState("");
   const [error, setError] = useState("");
+  const [existingAccount, setExistingAccount] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isSignup = mode === "signup";
+  const shouldLogInExistingAccount = isSignup && existingAccount;
+
+  useEffect(() => {
+    setExistingAccount(false);
+
+    if (!isSignup || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) return;
+
+    const timeoutId = window.setTimeout(async () => {
+      try {
+        const response = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+        const payload = (await response.json()) as { hasAccess?: boolean };
+
+        setExistingAccount(Boolean(payload.hasAccess));
+      } catch {
+        setExistingAccount(false);
+      }
+    }, 450);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [email, isSignup]);
 
   async function requestVerificationCode() {
     const response = await fetch("/api/auth/request-code", {
@@ -121,6 +146,11 @@ function AuthCard({
     setIsLoading(true);
 
     try {
+      if (shouldLogInExistingAccount) {
+        await signInExistingAccount();
+        return;
+      }
+
       if (isSignup && !codeSent) {
         await requestVerificationCode();
         return;
@@ -160,10 +190,12 @@ function AuthCard({
   return (
     <form className="authCard" onSubmit={handleSubmit}>
       <div>
-        <p className="eyebrow">{isSignup ? "Sign up" : "Welcome back"}</p>
-        <h2>{isSignup ? "Create your account." : "Log in."}</h2>
+        <p className="eyebrow">{shouldLogInExistingAccount ? "Account found" : isSignup ? "Sign up" : "Welcome back"}</p>
+        <h2>{shouldLogInExistingAccount ? "Log in to your account." : isSignup ? "Create your account." : "Log in."}</h2>
         <p>
-          {isSignup
+          {shouldLogInExistingAccount
+            ? "Looks like you already have access. Enter your password and log in."
+            : isSignup
             ? "Enter your email and password first. Then we will send a verification code to your email."
             : "Use your owner, employee, or subscriber account."}
         </p>
@@ -246,12 +278,16 @@ function AuthCard({
 
       <button className="generateButton" type="submit" disabled={isLoading || (isSignup && codeSent && !verificationCode)}>
         {isLoading
-          ? isSignup
+          ? shouldLogInExistingAccount
+            ? "Signing in..."
+            : isSignup
             ? codeSent
               ? "Verifying..."
               : "Sending code..."
             : "Signing in..."
-          : isSignup
+          : shouldLogInExistingAccount
+            ? "Log in"
+            : isSignup
             ? codeSent
               ? "Continue"
               : "Sign up"
