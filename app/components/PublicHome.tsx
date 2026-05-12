@@ -75,37 +75,27 @@ function AuthCard({
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const isSignup = mode === "signup";
-  const canRequestCode = isSignup && email.trim().length > 0 && password.length >= 8;
 
-  async function handleRequestCode() {
-    setError("");
-    setIsLoading(true);
+  async function requestVerificationCode() {
+    const response = await fetch("/api/auth/request-code", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email })
+    });
+    const responseText = await response.text();
+    const payload = responseText ? safeParseJson(responseText) : {};
 
-    try {
-      const response = await fetch("/api/auth/request-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
-      const responseText = await response.text();
-      const payload = responseText ? safeParseJson(responseText) : {};
-
-      if (!response.ok) {
-        if (response.status === 409 && payload.error?.includes("already has access")) {
-          await signInExistingAccount();
-          return;
-        }
-
-        throw new Error(payload.error || "Unable to send verification code.");
+    if (!response.ok) {
+      if (response.status === 409 && payload.error?.includes("already has access")) {
+        await signInExistingAccount();
+        return;
       }
 
-      setCodeSent(true);
-      setDevCode(payload.devCode || "");
-    } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Something went wrong.");
-    } finally {
-      setIsLoading(false);
+      throw new Error(payload.error || "Unable to send verification code.");
     }
+
+    setCodeSent(true);
+    setDevCode(payload.devCode || "");
   }
 
   async function signInExistingAccount() {
@@ -131,6 +121,11 @@ function AuthCard({
     setIsLoading(true);
 
     try {
+      if (isSignup && !codeSent) {
+        await requestVerificationCode();
+        return;
+      }
+
       const response = await fetch(isSignup ? "/api/auth/signup" : "/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,11 +155,11 @@ function AuthCard({
   return (
     <form className="authCard" onSubmit={handleSubmit}>
       <div>
-        <p className="eyebrow">{isSignup ? "Start your trial" : "Welcome back"}</p>
+        <p className="eyebrow">{isSignup ? "Sign up" : "Welcome back"}</p>
         <h2>{isSignup ? "Create your account." : "Log in."}</h2>
         <p>
           {isSignup
-            ? "You will enter payment info in Stripe. Your first charge starts after 7 days."
+            ? "Enter your email and password first. Then we will send a verification code to your email."
             : "Use your owner, employee, or subscriber account."}
         </p>
       </div>
@@ -203,39 +198,58 @@ function AuthCard({
           required
         />
       </div>
-      {canRequestCode ? (
-        <div className="verificationBox">
-          <button className="secondaryButton" type="button" onClick={handleRequestCode} disabled={isLoading}>
-            {codeSent ? "Send new code" : "Send verification code"}
-          </button>
-          {codeSent ? <p>Enter the 6-digit code sent to your email.</p> : null}
-          {devCode ? <p className="devCode">Local test code: {devCode}</p> : null}
-        </div>
-      ) : null}
       {isSignup && codeSent ? (
-        <div className="field">
-          <label htmlFor="verificationCode">Verification Code</label>
-          <input
-            id="verificationCode"
-            type="text"
-            inputMode="numeric"
-            value={verificationCode}
-            onChange={(event) => setVerificationCode(event.target.value)}
-            autoComplete="one-time-code"
-            placeholder="123456"
-            maxLength={6}
-            required
-          />
-        </div>
+        <>
+          <div className="verificationBox">
+            <p>Check your email and enter the 6-digit verification code.</p>
+            {devCode ? <p className="devCode">Local test code: {devCode}</p> : null}
+            <button
+              className="secondaryButton"
+              type="button"
+              onClick={async () => {
+                setError("");
+                setIsLoading(true);
+                try {
+                  await requestVerificationCode();
+                } catch (caughtError) {
+                  setError(caughtError instanceof Error ? caughtError.message : "Something went wrong.");
+                } finally {
+                  setIsLoading(false);
+                }
+              }}
+              disabled={isLoading}
+            >
+              Send new code
+            </button>
+          </div>
+          <div className="field">
+            <label htmlFor="verificationCode">Verification Code</label>
+            <input
+              id="verificationCode"
+              type="text"
+              inputMode="numeric"
+              value={verificationCode}
+              onChange={(event) => setVerificationCode(event.target.value)}
+              autoComplete="one-time-code"
+              placeholder="123456"
+              maxLength={6}
+              required
+            />
+          </div>
+        </>
       ) : null}
 
-      <button className="generateButton" type="submit" disabled={isLoading || (isSignup && (!codeSent || !verificationCode))}>
+      <button className="generateButton" type="submit" disabled={isLoading || (isSignup && codeSent && !verificationCode)}>
         {isLoading
           ? isSignup
-            ? "Opening checkout..."
+            ? codeSent
+              ? "Verifying..."
+              : "Sending code..."
             : "Signing in..."
           : isSignup
-            ? "Start 7-day trial"
+            ? codeSent
+              ? "Continue"
+              : "Sign up"
             : "Log in"}
       </button>
       {error ? <p className="error">{error}</p> : null}
