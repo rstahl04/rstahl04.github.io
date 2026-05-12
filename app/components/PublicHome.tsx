@@ -91,6 +91,11 @@ function AuthCard({
       const payload = responseText ? safeParseJson(responseText) : {};
 
       if (!response.ok) {
+        if (response.status === 409 && payload.error?.includes("already has access")) {
+          await signInExistingAccount();
+          return;
+        }
+
         throw new Error(payload.error || "Unable to send verification code.");
       }
 
@@ -101,6 +106,23 @@ function AuthCard({
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function signInExistingAccount() {
+    const response = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const responseText = await response.text();
+    const payload = responseText ? safeParseJson(responseText) : {};
+
+    if (!response.ok) {
+      throw new Error(payload.error || "This account already exists. Please use the Log in button.");
+    }
+
+    window.location.reload();
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
