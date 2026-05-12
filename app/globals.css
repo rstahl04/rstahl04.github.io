@@ -1,0 +1,626 @@
+:root {
+  --ink: #09251a;
+  --muted: #617066;
+  --paper: #f8ebd4;
+  --surface: #ffffff;
+  --line: rgba(9, 37, 26, 0.14);
+  --teal: #135f2c;
+  --blue: #256d44;
+  --coral: #cb6749;
+  --gold: #f2ce86;
+  --soft: #e6ead3;
+  --shadow: 0 24px 70px rgba(9, 37, 26, 0.12);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  background: var(--paper);
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--blue);
+}
+
+.publicHero {
+  min-height: 78vh;
+  padding: 28px clamp(20px, 5vw, 64px) clamp(46px, 7vw, 84px);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(250px, 360px);
+  gap: clamp(24px, 4vw, 54px);
+  align-items: center;
+  padding: 28px clamp(20px, 5vw, 64px) clamp(34px, 5vw, 58px);
+  background: var(--paper);
+  border-bottom: 1px solid var(--line);
+}
+
+.topBar {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 44px;
+  margin-bottom: clamp(8px, 2vw, 18px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+.brandLogo {
+  display: block;
+  width: clamp(210px, 23vw, 320px);
+  height: auto;
+  object-fit: contain;
+}
+
+.brandMark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: #ffffff;
+  background: var(--ink);
+  border-radius: 7px;
+  font-size: 0.95rem;
+  font-weight: 900;
+}
+
+.topBadge,
+.accountBar {
+  padding: 7px 10px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.64);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.accountBar {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: min(520px, 56vw);
+}
+
+.accountBar span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountBar button {
+  min-height: 28px;
+  padding: 0 8px;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.accountBar button:hover,
+.accountBar button:focus-visible {
+  background: var(--surface);
+}
+
+.publicActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.publicActions button,
+.textButton {
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.publicActions button.dark {
+  color: #ffffff;
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.publicActions button:hover,
+.publicActions button:focus-visible,
+.textButton:hover,
+.textButton:focus-visible {
+  background: var(--surface);
+}
+
+.publicActions button.dark:hover,
+.publicActions button.dark:focus-visible {
+  background: var(--teal);
+  border-color: var(--teal);
+}
+
+.publicGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(310px, 420px);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  padding-top: clamp(22px, 4vw, 56px);
+}
+
+.priceCard {
+  display: inline-grid;
+  gap: 4px;
+  max-width: 520px;
+  margin-top: 28px;
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.76);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 14px 40px rgba(21, 27, 30, 0.07);
+}
+
+.priceCard strong {
+  font-size: 1.55rem;
+}
+
+.priceCard span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.authCard {
+  display: grid;
+  gap: 18px;
+  padding: clamp(22px, 4vw, 32px);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 52px rgba(21, 27, 30, 0.1);
+}
+
+.authCard h2 {
+  margin-bottom: 10px;
+}
+
+.authCard p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.textButton {
+  color: var(--muted);
+  background: transparent;
+}
+
+.publicDetails {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  padding: clamp(24px, 4vw, 44px) clamp(20px, 5vw, 64px) clamp(56px, 7vw, 92px);
+}
+
+.publicDetails article {
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 14px 40px rgba(21, 27, 30, 0.06);
+}
+
+.publicDetails p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.heroCopy {
+  max-width: 760px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  color: var(--teal);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 690px;
+  margin-bottom: 18px;
+  font-size: clamp(2.2rem, 5vw, 4.45rem);
+  line-height: 1.04;
+  letter-spacing: 0;
+}
+
+h2 {
+  margin-bottom: 12px;
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+  line-height: 1.05;
+  letter-spacing: 0;
+}
+
+h3 {
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+.heroCopy p:not(.eyebrow),
+.emptyState p,
+.resultHeader p {
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.58;
+}
+
+.heroPreview {
+  width: 100%;
+  min-width: 0;
+  border-radius: 8px;
+  border: 1px solid rgba(21, 27, 30, 0.16);
+  box-shadow: 0 18px 44px rgba(21, 27, 30, 0.1);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(280px, 430px) minmax(0, 1fr);
+  gap: 24px;
+  align-items: flex-start;
+  padding: clamp(24px, 4vw, 44px) clamp(20px, 5vw, 64px) clamp(56px, 7vw, 92px);
+}
+
+.loginPage {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: clamp(22px, 5vw, 64px);
+  background:
+    linear-gradient(130deg, rgba(226, 234, 219, 0.68), rgba(245, 241, 232, 0) 54%),
+    var(--paper);
+}
+
+.loginShell {
+  width: min(980px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 410px);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.loginIntro,
+.loginForm {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 18px 52px rgba(21, 27, 30, 0.08);
+}
+
+.loginIntro {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 64px;
+  padding: clamp(26px, 5vw, 44px);
+}
+
+.loginIntro h1 {
+  max-width: 620px;
+  font-size: clamp(2.1rem, 5vw, 4.2rem);
+}
+
+.loginIntro p:not(.eyebrow) {
+  max-width: 600px;
+  color: var(--muted);
+  line-height: 1.62;
+}
+
+.loginForm {
+  align-self: center;
+  display: grid;
+  gap: 18px;
+  padding: clamp(22px, 4vw, 32px);
+}
+
+.generatorForm,
+.emptyState,
+.resultHeader,
+.outputSection,
+.sources,
+.warnings {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 14px 40px rgba(21, 27, 30, 0.07);
+}
+
+.generatorForm {
+  position: sticky;
+  top: 20px;
+  display: grid;
+  gap: 18px;
+  padding: 24px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+label {
+  font-weight: 800;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 13px 14px;
+  color: var(--ink);
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: 3px solid rgba(18, 106, 103, 0.18);
+  border-color: var(--teal);
+}
+
+.generateButton,
+.secondaryButton,
+.copyAllButton,
+.sectionTitle button {
+  min-height: 44px;
+  padding: 0 16px;
+  color: #ffffff;
+  background: var(--teal);
+  border: 1px solid var(--teal);
+  border-radius: 8px;
+  font-weight: 800;
+}
+
+.generateButton:hover,
+.secondaryButton:hover,
+.copyAllButton:hover,
+.sectionTitle button:hover {
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.secondaryButton {
+  min-height: 40px;
+  color: var(--ink);
+  background: #ffffff;
+  border-color: var(--line);
+}
+
+.secondaryButton:hover,
+.secondaryButton:focus-visible {
+  color: #ffffff;
+}
+
+.generateButton:disabled,
+.secondaryButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.verificationBox {
+  display: grid;
+  gap: 8px;
+}
+
+.verificationBox p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+.verificationBox .devCode {
+  color: var(--teal);
+  font-weight: 800;
+}
+
+.error {
+  margin: 0;
+  color: #a53d2a;
+  font-weight: 700;
+}
+
+.outputArea {
+  min-width: 0;
+}
+
+.emptyState {
+  padding: clamp(28px, 5vw, 48px);
+}
+
+.resultHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+    align-items: flex-start;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.resultHeader p {
+  margin-bottom: 0;
+}
+
+.warnings {
+  padding: 16px 18px;
+  margin-bottom: 16px;
+  background: #fff8e4;
+  border-color: rgba(217, 170, 67, 0.5);
+}
+
+.warnings p {
+  margin: 0;
+  color: #72530d;
+  font-weight: 700;
+}
+
+.warnings p + p {
+  margin-top: 8px;
+}
+
+.sources {
+  padding: 16px 18px;
+  margin-bottom: 16px;
+}
+
+.sources summary {
+  color: var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sources ul {
+  display: grid;
+  gap: 8px;
+  padding-left: 18px;
+  margin: 14px 0 0;
+}
+
+.sections {
+  display: grid;
+  gap: 16px;
+}
+
+.outputSection {
+  overflow: hidden;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.sectionTitle button {
+  min-height: 38px;
+  padding: 0 13px;
+}
+
+pre {
+  max-height: 520px;
+  margin: 0;
+  padding: 18px;
+  overflow: auto;
+  color: #233033;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #fcfaf5;
+}
+
+@media (max-width: 980px) {
+  .hero,
+  .workspace,
+  .loginShell,
+  .publicGrid,
+  .publicDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-bottom: 30px;
+  }
+
+  .heroPreview {
+    display: none;
+  }
+
+  .generatorForm {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero {
+    padding-top: 20px;
+    padding-bottom: 26px;
+  }
+
+  .topBar {
+    align-items: flex-start;
+    margin-bottom: 22px;
+  }
+
+  .topBadge,
+  .publicActions {
+    display: none;
+  }
+
+  .accountBar {
+    max-width: 58vw;
+  }
+
+  h1 {
+    font-size: clamp(2.15rem, 12vw, 3.2rem);
+  }
+
+  .resultHeader,
+  .sectionTitle {
+    display: grid;
+  }
+
+  .copyAllButton,
+  .sectionTitle button {
+    width: 100%;
+  }
+}
