@@ -136,6 +136,11 @@ function AuthCard({
       const payload = responseText ? safeParseJson(responseText) : {};
 
       if (!response.ok) {
+        if (isSignup && response.status === 409 && payload.error?.includes("already has access")) {
+          await signInExistingAccount();
+          return;
+        }
+
         throw new Error(payload.error || "Something went wrong. Please try again.");
       }
 
