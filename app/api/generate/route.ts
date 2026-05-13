@@ -6,6 +6,8 @@ import { scrapeBusinessWebsite } from "@/lib/scraper";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const OPENAI_TIMEOUT_MS = 45000;
+
 type GeneratedSections = {
   customizedPrompt: string;
   welcomeMessage: string;
@@ -64,21 +66,14 @@ export async function POST(request: Request) {
       pages: scraped.pages
     });
 
-    const aiResponse = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: process.env.OPENAI_MODEL || "gpt-5-mini",
-        instructions:
-          assistantType === "chat"
-            ? "You generate factual AI chat assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON."
-            : "You generate factual AI phone assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON.",
-        input,
-        max_output_tokens: 12000
-      })
+    const aiResponse = await fetchOpenAIWithTimeout({
+      model: process.env.OPENAI_MODEL || "gpt-5-mini",
+      instructions:
+        assistantType === "chat"
+          ? "You generate factual AI chat assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON."
+          : "You generate factual AI phone assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON.",
+      input,
+      max_output_tokens: 9000
     });
 
     if (!aiResponse.ok) {
@@ -107,6 +102,21 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function fetchOpenAIWithTimeout(body: object) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), OPENAI_TIMEOUT_MS);
+
+  return fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    signal: controller.signal,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+    },
+    body: JSON.stringify(body)
+  }).finally(() => clearTimeout(timeout));
 }
 
 function extractOutputText(payload: unknown) {

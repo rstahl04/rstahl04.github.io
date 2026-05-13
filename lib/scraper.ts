@@ -11,9 +11,10 @@ export type ScrapeResult = {
   warnings: string[];
 };
 
-const MAX_PAGES = 10;
-const MAX_TEXT_PER_PAGE = 9000;
-const REQUEST_TIMEOUT_MS = 12000;
+const MAX_PAGES = 5;
+const MAX_TEXT_PER_PAGE = 5000;
+const REQUEST_TIMEOUT_MS = 6000;
+const SCRAPE_BUDGET_MS = 18000;
 
 const importantPageTerms = [
   "about",
@@ -63,6 +64,7 @@ export async function scrapeBusinessWebsite(inputUrl: string): Promise<ScrapeRes
   const candidates = new Map<string, number>();
   const visited = new Set<string>();
   const pages: ScrapedPage[] = [];
+  const scrapeDeadline = Date.now() + SCRAPE_BUDGET_MS;
 
   candidates.set(startUrl.href, 100);
 
@@ -73,7 +75,7 @@ export async function scrapeBusinessWebsite(inputUrl: string): Promise<ScrapeRes
     }
   }
 
-  while (pages.length < MAX_PAGES && candidates.size > 0) {
+  while (pages.length < MAX_PAGES && candidates.size > 0 && Date.now() < scrapeDeadline) {
     const next = [...candidates.entries()]
       .sort((a, b) => b[1] - a[1])
       .find(([url]) => !visited.has(url));
@@ -100,6 +102,10 @@ export async function scrapeBusinessWebsite(inputUrl: string): Promise<ScrapeRes
         candidates.set(link.href, Math.max(candidates.get(link.href) ?? 0, scoreUrl(link)));
       }
     }
+  }
+
+  if (Date.now() >= scrapeDeadline) {
+    warnings.push("Website scraping reached the time limit. Review Missing Info to Confirm carefully.");
   }
 
   if (pages.length === 0) {
@@ -137,7 +143,7 @@ async function discoverSitemapUrls(startUrl: URL) {
     })
     .filter((url): url is URL => Boolean(url));
 
-  return urls.slice(0, 40);
+  return urls.slice(0, 20);
 }
 
 async function fetchPage(url: string): Promise<
