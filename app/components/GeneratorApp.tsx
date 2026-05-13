@@ -47,6 +47,7 @@ const sectionLabels: Record<keyof OutputSections, string> = {
 };
 
 const sectionOrder = Object.keys(sectionLabels) as (keyof OutputSections)[];
+const useBackgroundJobs = process.env.NEXT_PUBLIC_BACKGROUND_JOBS_ENABLED === "true";
 
 export function GeneratorApp({ user }: { user: SessionUser }) {
   const [assistantType, setAssistantType] = useState<AssistantType>("voice");
@@ -103,24 +104,37 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/generate-jobs", {
+      const response = await fetch(useBackgroundJobs ? "/api/generate-jobs" : "/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assistantType, businessType, websiteUrl, additionalNotes })
       });
 
       const responseText = await response.text();
-      const payload = parseJsonResponse<{ job?: GenerateJob; error?: string }>(responseText);
+      const payload = parseJsonResponse<(GenerateResponse & { error?: string }) | { job?: GenerateJob; error?: string }>(
+        responseText
+      );
 
       if (!response.ok) {
         throw new Error(payload?.error || responseText || "Unable to generate output.");
       }
 
-      if (!payload?.job?.id) {
-        throw new Error("The server response was missing a generation job.");
+      if (useBackgroundJobs) {
+        const jobPayload = payload as { job?: GenerateJob };
+        if (!jobPayload.job?.id) {
+          throw new Error("The server response was missing a generation job.");
+        }
+
+        await pollGenerateJob(jobPayload.job.id);
+        return;
       }
 
-      await pollGenerateJob(payload.job.id);
+      const directPayload = payload as GenerateResponse | null;
+      if (!directPayload?.sections) {
+        throw new Error("The server response was missing generated sections.");
+      }
+
+      setResult(directPayload);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Something went wrong.");
     } finally {
