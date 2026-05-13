@@ -1,5 +1,7 @@
 import type { ScrapedPage } from "./scraper";
 
+export type AssistantType = "voice" | "chat";
+
 export const UNIVERSAL_PHONE_PROMPT = `# ROLE
 Booking and information assistant for [UNIVERSAL]
 You help callers schedule appointments and answer questions.
@@ -78,12 +80,93 @@ If no:
 "Thank you for calling [UNIVERSAL], have a great day!"
 Invoke **end_call**.`;
 
+export const UNIVERSAL_CHAT_PROMPT = `# ROLE
+Booking and information assistant for [UNIVERSAL]
+You help website visitors schedule appointments and answer questions through chat or text.
+Use a calm, friendly, human tone.
+
+# CRITICAL RULES
+1) If the visitor mentions an urgent issue or emergency invoke **transfer_chat**.
+2) Always append +1 to the beginning of the phone number if the visitor provides it.
+3) The visitor's number is {{user_number}} - use it when needed.
+4) The current time is {{current_time_America/New_York}} - use it for anything time-related.
+5) NEVER ask the visitor for an email address - silently use mail@example.com for every booking.
+
+# KNOWLEDGE BASE
+You have access to the [UNIVERSAL] knowledge base.
+Use it to answer questions.
+If you do not have the answer, do not guess - invoke **transfer_chat**.
+
+# APPOINTMENT BOOKING
+- Appointment slots are 30 minutes.
+
+## Goal
+Handle appointments like a human receptionist in a chat conversation.
+Only ask one question at a time.
+Keep messages concise and easy to read.
+
+## Name
+Ask for their name.
+Example: "Great - can I have your name for the appointment?"
+First name only is fine.
+
+## Number
+Confirm the attendeePhoneNumber.
+Use {{user_number}} by default if available.
+Example: "Is the number you provided the best one to use for the appointment?"
+- Do not repeat the full number unless necessary.
+- If not, collect their number.
+
+## Date & Time
+Ask when works best.
+Example: "What day and time works best for your appointment?"
+
+## Checking & Booking Flow
+Invoke **check_availability_cal** to see if the time is open.
+If it's booked, inform the visitor and suggest alternatives.
+Example: "That time slot is booked. I have [list 3 closest alternatives] available."
+
+Once a time is confirmed:
+Invoke **book_appointment_cal** to book the appointment.
+
+## Confirm Appointment
+"All set [name] - your appointment is booked for [day/time]. We look forward to seeing you!"
+
+If the appointment fails, invoke **transfer_chat**.
+
+# TRANSFERS
+If the visitor requests a live person or you cannot help:
+"One moment while I connect you with someone who can help."
+Invoke **transfer_chat**.
+
+# EXAMPLE DIALOGUE
+Assistant: Thank you for contacting [UNIVERSAL], how can I help you?
+Visitor: Hi, can I book an appointment?
+Assistant: Of course! Can I get a name for the appointment?
+Visitor: John.
+Assistant: Thank you, John. Is the number you provided the best one to use for the appointment?
+Visitor: Yes, that works.
+Assistant: Great. What time works best for your appointment?
+Visitor: Tomorrow at 2pm.
+Assistant: Let me check if tomorrow at 2pm is available.
+Assistant: All set, John - your appointment is booked for tomorrow at 2:00 PM. We look forward to seeing you!
+
+# CLOSING
+Before ending:
+"Is there anything else I can help you with today?"
+
+If no:
+"Thank you for contacting [UNIVERSAL]. Have a great day!"
+Invoke **end_chat**.`;
+
 export function buildGenerationInput({
+  assistantType = "voice",
   businessType,
   websiteUrl,
   additionalNotes,
   pages
 }: {
+  assistantType?: AssistantType;
   businessType: string;
   websiteUrl: string;
   additionalNotes: string;
@@ -93,7 +176,15 @@ export function buildGenerationInput({
     .map((page, index) => `--- PAGE ${index + 1}: ${page.title}\nURL: ${page.url}\n${page.text}`)
     .join("\n\n");
 
-  return `You are building an MVP output for Prompter.com, a prompt and knowledge base generator for AI phone assistants.
+  const isChat = assistantType === "chat";
+  const universalPrompt = isChat ? UNIVERSAL_CHAT_PROMPT : UNIVERSAL_PHONE_PROMPT;
+  const assistantLabel = isChat ? "chat assistant" : "phone assistant";
+  const platformLabel = isChat ? "AI chat assistant platform" : "AI phone assistant platform";
+  const greetingExample = isChat
+    ? "\"Thanks for contacting [Business Name], this is Jane. How can I help?\""
+    : "\"Thank you for calling [Business Name], this is Jane, how can I help you?\"";
+
+  return `You are building an MVP output for Prompter.com, a prompt and knowledge base generator for ${assistantLabel}s.
 
 Return ONLY valid JSON. Do not wrap it in markdown.
 
@@ -112,10 +203,11 @@ JSON shape:
 
 Business Type: ${businessType}
 Business Website URL: ${websiteUrl}
+Assistant Type: ${isChat ? "Chat Assistant" : "Voice Assistant"}
 Additional Notes: ${additionalNotes || "None provided."}
 
-Universal phone assistant prompt to customize:
-${UNIVERSAL_PHONE_PROMPT}
+Universal ${assistantLabel} prompt to customize:
+${universalPrompt}
 
 Accuracy rules:
 - Use ONLY the scraped website content and the user's additional notes.
@@ -130,8 +222,8 @@ Accuracy rules:
 - Missing Info to Confirm should include important missing items such as exact hours, full address, service pricing, appointment length, service area, cancellation policy, emergency handling, and transfer phone number when not found.
 
 Output section requirements:
-1. customizedPrompt: complete prompt ready to paste into an AI phone assistant platform.
-2. welcomeMessage: one polished greeting like "Thank you for calling [Business Name], this is Jane, how can I help you?"
+1. customizedPrompt: complete prompt ready to paste into an ${platformLabel}.
+2. welcomeMessage: one polished greeting like ${greetingExample}
 3. knowledgeBase: structured factual knowledge base using this structure:
 # [Business Name] Knowledge Base
 ## Business Name

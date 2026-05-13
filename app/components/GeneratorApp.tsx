@@ -3,6 +3,8 @@
 import { FormEvent, useMemo, useState } from "react";
 import type { SessionUser } from "@/lib/auth";
 
+type AssistantType = "voice" | "chat";
+
 type OutputSections = {
   customizedPrompt: string;
   welcomeMessage: string;
@@ -39,6 +41,7 @@ const sectionLabels: Record<keyof OutputSections, string> = {
 const sectionOrder = Object.keys(sectionLabels) as (keyof OutputSections)[];
 
 export function GeneratorApp({ user }: { user: SessionUser }) {
+  const [assistantType, setAssistantType] = useState<AssistantType>("voice");
   const [businessType, setBusinessType] = useState("");
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [additionalNotes, setAdditionalNotes] = useState("");
@@ -93,7 +96,7 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ businessType, websiteUrl, additionalNotes })
+        body: JSON.stringify({ assistantType, businessType, websiteUrl, additionalNotes })
       });
 
       const payload = await response.json();
@@ -142,6 +145,30 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
 
       <section className="workspace">
         <form className="generatorForm" onSubmit={handleSubmit}>
+          <div className="field">
+            <label>Assistant Type</label>
+            <div className="segmentedControl" role="radiogroup" aria-label="Assistant type">
+              <button
+                type="button"
+                className={assistantType === "voice" ? "active" : ""}
+                onClick={() => setAssistantType("voice")}
+                role="radio"
+                aria-checked={assistantType === "voice"}
+              >
+                Voice Assistant
+              </button>
+              <button
+                type="button"
+                className={assistantType === "chat" ? "active" : ""}
+                onClick={() => setAssistantType("chat")}
+                role="radio"
+                aria-checked={assistantType === "chat"}
+              >
+                Chat Assistant
+              </button>
+            </div>
+          </div>
+
           <div className="field">
             <label htmlFor="businessType">Business Type</label>
             <input

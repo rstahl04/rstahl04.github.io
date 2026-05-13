@@ -407,6 +407,34 @@ textarea {
   resize: vertical;
 }
 
+.segmentedControl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 5px;
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.segmentedControl button {
+  min-height: 42px;
+  padding: 0 12px;
+  color: var(--muted);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.segmentedControl button.active {
+  color: #ffffff;
+  background: var(--teal);
+  border-color: var(--teal);
+  box-shadow: 0 8px 20px rgba(9, 37, 26, 0.12);
+}
+
 input:focus,
 textarea:focus {
   outline: 3px solid rgba(18, 106, 103, 0.18);

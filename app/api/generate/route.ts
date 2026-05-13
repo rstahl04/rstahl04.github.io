@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    const assistantType = body.assistantType === "chat" ? "chat" : "voice";
     const businessType = String(body.businessType ?? "").trim();
     const websiteUrl = String(body.websiteUrl ?? "").trim();
     const additionalNotes = String(body.additionalNotes ?? "").trim();
@@ -56,6 +57,7 @@ export async function POST(request: Request) {
 
     const scraped = await scrapeBusinessWebsite(websiteUrl);
     const input = buildGenerationInput({
+      assistantType,
       businessType,
       websiteUrl,
       additionalNotes,
@@ -71,7 +73,9 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         model: process.env.OPENAI_MODEL || "gpt-5-mini",
         instructions:
-          "You generate factual AI phone assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON.",
+          assistantType === "chat"
+            ? "You generate factual AI chat assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON."
+            : "You generate factual AI phone assistant prompts and business knowledge bases. Follow accuracy rules strictly and output only valid JSON.",
         input,
         max_output_tokens: 12000
       })
