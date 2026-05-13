@@ -269,7 +269,7 @@ export function buildGenerationInput({
   const assistantLabel = isChat ? "chat assistant" : "phone assistant";
   const platformLabel = isChat ? "AI chat assistant platform" : "AI phone assistant platform";
   const greetingExample = isChat
-    ? "\"Thanks for contacting [Business Name], this is Jane. How can I help?\""
+    ? "\"Hi! Thanks for reaching out to us at [Business Name] — I'm here to help with bookings, questions, pricing, and anything else you need.\""
     : "\"Thank you for calling [Business Name], this is Jane, how can I help you?\"";
 
   return `You are building an MVP output for Prompter.com, a prompt and knowledge base generator for ${assistantLabel}s.
@@ -312,7 +312,11 @@ Accuracy rules:
 
 Output section requirements:
 1. customizedPrompt: complete prompt ready to paste into an ${platformLabel}.
-2. welcomeMessage: one polished greeting like ${greetingExample}
+2. welcomeMessage: ${
+    isChat
+      ? "use this exact format, replacing [Business Name] with the discovered company name: " + greetingExample
+      : "one polished greeting like " + greetingExample
+  }
 3. knowledgeBase: structured factual knowledge base using this structure:
 # [Business Name] Knowledge Base
 ## Business Name
