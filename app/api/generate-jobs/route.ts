@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionFromCookieHeader, hasAppAccess } from "@/lib/auth";
+import { createGenerateJob, updateGenerateJob } from "@/lib/generation-jobs";
 import { generatePromptPackage } from "@/lib/generation-service";
 
 export const runtime = "nodejs";
@@ -23,18 +24,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Business type and website URL are required." }, { status: 400 });
     }
 
-    const result = await generatePromptPackage({
+    const job = createGenerateJob();
+
+    void processJob(job.id, {
       assistantType,
       businessType,
       websiteUrl,
       additionalNotes
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({ job });
   } catch (error) {
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unexpected server error." },
+      { error: error instanceof Error ? error.message : "Unable to start generation job." },
       { status: 500 }
     );
+  }
+}
+
+async function processJob(
+  jobId: string,
+  params: {
+    assistantType: "voice" | "chat";
+    businessType: string;
+    websiteUrl: string;
+    additionalNotes: string;
+  }
+) {
+  try {
+    const result = await generatePromptPackage(params, (status, message) => {
+      updateGenerateJob(jobId, { status, message });
+    });
+
+    updateGenerateJob(jobId, {
+      status: "completed",
+      message: "Generation complete",
+      result
+    });
+  } catch (error) {
+    updateGenerateJob(jobId, {
+      status: "failed",
+      message: "Generation failed",
+      error: error instanceof Error ? error.message : "Unexpected generation error."
+    });
   }
 }

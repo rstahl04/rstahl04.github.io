@@ -26,6 +26,14 @@ type GenerateResponse = {
   };
 };
 
+type GenerateJob = {
+  id: string;
+  status: "queued" | "scraping" | "generating" | "completed" | "failed";
+  message: string;
+  result?: GenerateResponse;
+  error?: string;
+};
+
 const sectionLabels: Record<keyof OutputSections, string> = {
   customizedPrompt: "Customized AI Prompt",
   welcomeMessage: "Welcome Message",
@@ -49,6 +57,7 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState("");
+  const [jobMessage, setJobMessage] = useState("");
 
   const allOutput = useMemo(() => {
     if (!result) return "";
@@ -90,32 +99,65 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
     event.preventDefault();
     setError("");
     setResult(null);
+    setJobMessage("");
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/generate", {
+      const response = await fetch("/api/generate-jobs", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ assistantType, businessType, websiteUrl, additionalNotes })
       });
 
       const responseText = await response.text();
-      const payload = parseJsonResponse<GenerateResponse & { error?: string }>(responseText);
+      const payload = parseJsonResponse<{ job?: GenerateJob; error?: string }>(responseText);
 
       if (!response.ok) {
         throw new Error(payload?.error || responseText || "Unable to generate output.");
       }
 
-      if (!payload?.sections) {
-        throw new Error("The server response was missing generated sections.");
+      if (!payload?.job?.id) {
+        throw new Error("The server response was missing a generation job.");
       }
 
-      setResult(payload);
+      await pollGenerateJob(payload.job.id);
     } catch (caughtError) {
       setError(caughtError instanceof Error ? caughtError.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function pollGenerateJob(jobId: string) {
+    for (let attempt = 0; attempt < 180; attempt += 1) {
+      const response = await fetch(`/api/generate-jobs/${jobId}`, { cache: "no-store" });
+      const responseText = await response.text();
+      const payload = parseJsonResponse<{ job?: GenerateJob; error?: string }>(responseText);
+
+      if (!response.ok) {
+        throw new Error(payload?.error || responseText || "Unable to check generation job.");
+      }
+
+      const job = payload?.job;
+      if (!job) throw new Error("Generation job response was missing.");
+
+      setJobMessage(job.message);
+
+      if (job.status === "completed") {
+        if (!job.result) throw new Error("Generation finished without a result.");
+        setResult(job.result);
+        setJobMessage("");
+        return;
+      }
+
+      if (job.status === "failed") {
+        throw new Error(job.error || "Generation failed.");
+      }
+
+      await wait(2000);
+    }
+
+    throw new Error("Generation is taking longer than expected. Please try again in a moment.");
   }
 
   return (
@@ -212,6 +254,7 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
             {isLoading ? "Generating..." : "Generate Prompt + Knowledge Base"}
           </button>
 
+          {jobMessage ? <p className="jobStatus">{jobMessage}</p> : null}
           {error ? <p className="error">{error}</p> : null}
         </form>
 
@@ -291,6 +334,10 @@ function parseJsonResponse<T>(value: string): T | null {
   } catch {
     return null;
   }
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 async function copyToClipboard(text: string) {

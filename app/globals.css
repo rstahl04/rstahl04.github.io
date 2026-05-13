@@ -503,6 +503,13 @@ textarea:focus {
   font-weight: 700;
 }
 
+.jobStatus {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
 .outputArea {
   min-width: 0;
 }
