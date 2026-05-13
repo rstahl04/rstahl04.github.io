@@ -99,10 +99,15 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
         body: JSON.stringify({ assistantType, businessType, websiteUrl, additionalNotes })
       });
 
-      const payload = await response.json();
+      const responseText = await response.text();
+      const payload = parseJsonResponse<GenerateResponse & { error?: string }>(responseText);
 
       if (!response.ok) {
-        throw new Error(payload.error || "Unable to generate output.");
+        throw new Error(payload?.error || responseText || "Unable to generate output.");
+      }
+
+      if (!payload?.sections) {
+        throw new Error("The server response was missing generated sections.");
       }
 
       setResult(payload);
@@ -276,6 +281,16 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
       </section>
     </main>
   );
+}
+
+function parseJsonResponse<T>(value: string): T | null {
+  if (!value) return null;
+
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return null;
+  }
 }
 
 async function copyToClipboard(text: string) {
