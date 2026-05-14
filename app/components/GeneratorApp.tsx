@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import type { SessionUser } from "@/lib/auth";
 
 type AssistantType = "voice" | "chat";
@@ -49,6 +49,15 @@ const sectionLabels: Record<keyof OutputSections, string> = {
 const sectionOrder = Object.keys(sectionLabels) as (keyof OutputSections)[];
 const useBackgroundJobs = process.env.NEXT_PUBLIC_BACKGROUND_JOBS_ENABLED === "true";
 
+const loadingSteps = [
+  { afterMs: 0, label: "Starting generation", progress: 8 },
+  { afterMs: 4000, label: "Scraping public website pages", progress: 24 },
+  { afterMs: 14000, label: "Reading services, hours, policies, and contact details", progress: 46 },
+  { afterMs: 30000, label: "Generating the assistant prompt", progress: 68 },
+  { afterMs: 60000, label: "Building the knowledge base and missing-info checklist", progress: 84 },
+  { afterMs: 100000, label: "Still working carefully for accuracy", progress: 92 }
+];
+
 export function GeneratorApp({ user }: { user: SessionUser }) {
   const [assistantType, setAssistantType] = useState<AssistantType>("voice");
   const [businessType, setBusinessType] = useState("");
@@ -59,6 +68,8 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState("");
   const [jobMessage, setJobMessage] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingStage, setLoadingStage] = useState("");
 
   const allOutput = useMemo(() => {
     if (!result) return "";
@@ -67,6 +78,30 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
       .map((key) => `# ${sectionLabels[key]}\n\n${result.sections[key]}`)
       .join("\n\n---\n\n");
   }, [result]);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingProgress(0);
+      setLoadingStage("");
+      return;
+    }
+
+    const startedAt = Date.now();
+
+    function updateLoadingState() {
+      const elapsed = Date.now() - startedAt;
+      const currentStep = [...loadingSteps].reverse().find((step) => elapsed >= step.afterMs) ?? loadingSteps[0];
+      const drift = Math.min(7, Math.floor(elapsed / 15000));
+
+      setLoadingProgress(Math.min(96, currentStep.progress + drift));
+      setLoadingStage(currentStep.label);
+    }
+
+    updateLoadingState();
+    const intervalId = window.setInterval(updateLoadingState, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [isLoading]);
 
   async function copyText(label: string, text: string) {
     try {
@@ -268,6 +303,21 @@ export function GeneratorApp({ user }: { user: SessionUser }) {
             {isLoading ? "Generating..." : "Generate Prompt + Knowledge Base"}
           </button>
 
+          {isLoading ? (
+            <div className="loadingPanel" role="status" aria-live="polite">
+              <div className="loadingRing" aria-hidden="true" />
+              <div className="loadingContent">
+                <div className="loadingHeader">
+                  <span>{loadingStage || "Generating"}</span>
+                  <strong>{loadingProgress}%</strong>
+                </div>
+                <div className="loadingTrack">
+                  <div className="loadingBar" style={{ width: `${loadingProgress}%` }} />
+                </div>
+                <p>Some websites take longer to inspect. Accuracy is prioritized over speed.</p>
+              </div>
+            </div>
+          ) : null}
           {jobMessage ? <p className="jobStatus">{jobMessage}</p> : null}
           {error ? <p className="error">{error}</p> : null}
         </form>

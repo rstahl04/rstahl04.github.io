@@ -510,6 +510,78 @@ textarea:focus {
   font-weight: 750;
 }
 
+.loadingPanel {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 14px;
+  background: #fbfaf6;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.loadingRing {
+  width: 38px;
+  height: 38px;
+  border: 4px solid rgba(19, 95, 44, 0.15);
+  border-top-color: var(--teal);
+  border-radius: 999px;
+  animation: spin 0.9s linear infinite;
+}
+
+.loadingContent {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.loadingHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.loadingHeader span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.loadingHeader strong {
+  color: var(--teal);
+}
+
+.loadingTrack {
+  height: 8px;
+  overflow: hidden;
+  background: rgba(19, 95, 44, 0.14);
+  border-radius: 999px;
+}
+
+.loadingBar {
+  height: 100%;
+  background: var(--teal);
+  border-radius: inherit;
+  transition: width 0.35s ease;
+}
+
+.loadingContent p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .outputArea {
   min-width: 0;
 }

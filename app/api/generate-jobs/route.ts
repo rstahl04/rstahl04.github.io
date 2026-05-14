@@ -4,7 +4,7 @@ import { createGenerateJob, updateGenerateJob } from "@/lib/generation-jobs";
 import { generatePromptPackage } from "@/lib/generation-service";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(request: Request) {
   try {
